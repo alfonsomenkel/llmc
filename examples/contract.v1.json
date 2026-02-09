@@ -1,0 +1,20 @@
+{
+  "inputs": [
+    "prompt"
+  ],
+  "output_type": "array",
+  "rules": [
+    {
+      "rule": "required_field",
+      "field": "id"
+    },
+    {
+      "rule": "field_type",
+      "field": "id",
+      "expected": "number"
+    },
+    {
+      "rule": "no_empty_rows"
+    }
+  ]
+}
