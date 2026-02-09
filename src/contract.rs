@@ -1,8 +1,11 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Contract {
+    pub contract: Option<String>,
+    pub version: Option<u32>,
     pub inputs: Vec<String>,
     pub output_type: OutputType,
     pub rules: Vec<Rule>,
@@ -20,6 +23,7 @@ pub enum OutputType {
 pub enum Rule {
     RequiredField { field: String },
     FieldType { field: String, expected: ValueType },
+    AllowedValues { field: String, values: Vec<Value> },
     NoEmptyRows,
 }
 

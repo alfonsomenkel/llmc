@@ -1,4 +1,6 @@
 {
+  "contract": "user_list",
+  "version": 1,
   "inputs": [
     "prompt"
   ],

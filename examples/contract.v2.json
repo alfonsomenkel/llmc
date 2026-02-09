@@ -1,0 +1,30 @@
+{
+  "contract": "user_list",
+  "version": 2,
+  "inputs": [
+    "prompt"
+  ],
+  "output_type": "array",
+  "rules": [
+    {
+      "rule": "required_field",
+      "field": "id"
+    },
+    {
+      "rule": "field_type",
+      "field": "id",
+      "expected": "number"
+    },
+    {
+      "rule": "allowed_values",
+      "field": "status",
+      "values": [
+        "ok",
+        "accepted"
+      ]
+    },
+    {
+      "rule": "no_empty_rows"
+    }
+  ]
+}

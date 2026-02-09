@@ -1,10 +1,12 @@
 [
   {
-    "id": "not-a-number",
-    "name": ""
+    "id": 1,
+    "name": "Alice",
+    "status": "rejected"
   },
-  {},
   {
-    "name": "Missing id"
+    "id": 2,
+    "name": "Bob",
+    "status": "accepted"
   }
 ]

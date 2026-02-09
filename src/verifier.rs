@@ -20,6 +20,14 @@ pub enum VerdictStatus {
 pub struct Violation {
     pub rule_name: String,
     pub detail: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub field: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rule: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expected: Option<Vec<Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub actual: Option<Value>,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -70,14 +78,14 @@ pub fn verify(contract: &Contract, output: &Value) -> Verdict {
     let mut violations = Vec::new();
 
     match contract.output_type {
-        OutputType::Object if !output.is_object() => violations.push(Violation {
-            rule_name: "OutputType".to_string(),
-            detail: "Expected top-level JSON object.".to_string(),
-        }),
-        OutputType::Array if !output.is_array() => violations.push(Violation {
-            rule_name: "OutputType".to_string(),
-            detail: "Expected top-level JSON array.".to_string(),
-        }),
+        OutputType::Object if !output.is_object() => violations.push(simple_violation(
+            "OutputType",
+            "Expected top-level JSON object.".to_string(),
+        )),
+        OutputType::Array if !output.is_array() => violations.push(simple_violation(
+            "OutputType",
+            "Expected top-level JSON array.".to_string(),
+        )),
         _ => {}
     }
 
@@ -94,11 +102,41 @@ pub fn verify(contract: &Contract, output: &Value) -> Verdict {
     Verdict { status, violations }
 }
 
+fn simple_violation(rule_name: &str, detail: String) -> Violation {
+    Violation {
+        rule_name: rule_name.to_string(),
+        detail,
+        field: None,
+        rule: None,
+        expected: None,
+        actual: None,
+    }
+}
+
+fn allowed_values_violation(
+    field: &str,
+    expected: &[Value],
+    actual: &Value,
+    detail: String,
+) -> Violation {
+    Violation {
+        rule_name: "AllowedValues".to_string(),
+        detail,
+        field: Some(field.to_string()),
+        rule: Some("allowed_values".to_string()),
+        expected: Some(expected.to_vec()),
+        actual: Some(actual.clone()),
+    }
+}
+
 fn check_rule(rule: &Rule, output: &Value, violations: &mut Vec<Violation>) {
     match rule {
         Rule::RequiredField { field } => check_required_field(field, output, violations),
         Rule::FieldType { field, expected } => {
             check_field_type(field, expected, output, violations)
+        }
+        Rule::AllowedValues { field, values } => {
+            check_allowed_values(field, values, output, violations)
         }
         Rule::NoEmptyRows => check_no_empty_rows(output, violations),
     }
@@ -108,10 +146,10 @@ fn check_required_field(field: &str, output: &Value, violations: &mut Vec<Violat
     match output {
         Value::Object(map) => {
             if !map.contains_key(field) {
-                violations.push(Violation {
-                    rule_name: "RequiredField".to_string(),
-                    detail: format!("Missing required field '{field}'."),
-                });
+                violations.push(simple_violation(
+                    "RequiredField",
+                    format!("Missing required field '{field}'."),
+                ));
             }
         }
         Value::Array(rows) => {
@@ -119,23 +157,23 @@ fn check_required_field(field: &str, output: &Value, violations: &mut Vec<Violat
                 match row {
                     Value::Object(map) => {
                         if !map.contains_key(field) {
-                            violations.push(Violation {
-                                rule_name: "RequiredField".to_string(),
-                                detail: format!("Row {idx} is missing required field '{field}'."),
-                            });
+                            violations.push(simple_violation(
+                                "RequiredField",
+                                format!("Row {idx} is missing required field '{field}'."),
+                            ));
                         }
                     }
-                    _ => violations.push(Violation {
-                        rule_name: "RequiredField".to_string(),
-                        detail: format!("Row {idx} is not an object."),
-                    }),
+                    _ => violations.push(simple_violation(
+                        "RequiredField",
+                        format!("Row {idx} is not an object."),
+                    )),
                 }
             }
         }
-        _ => violations.push(Violation {
-            rule_name: "RequiredField".to_string(),
-            detail: "Output must be an object or an array of objects.".to_string(),
-        }),
+        _ => violations.push(simple_violation(
+            "RequiredField",
+            "Output must be an object or an array of objects.".to_string(),
+        )),
     }
 }
 
@@ -153,17 +191,17 @@ fn check_field_type(
                     Value::Object(map) => {
                         check_field_type_in_map(field, expected, map, Some(idx), violations)
                     }
-                    _ => violations.push(Violation {
-                        rule_name: "FieldType".to_string(),
-                        detail: format!("Row {idx} is not an object."),
-                    }),
+                    _ => violations.push(simple_violation(
+                        "FieldType",
+                        format!("Row {idx} is not an object."),
+                    )),
                 }
             }
         }
-        _ => violations.push(Violation {
-            rule_name: "FieldType".to_string(),
-            detail: "Output must be an object or an array of objects.".to_string(),
-        }),
+        _ => violations.push(simple_violation(
+            "FieldType",
+            "Output must be an object or an array of objects.".to_string(),
+        )),
     }
 }
 
@@ -180,24 +218,24 @@ fn check_field_type_in_map(
                 let location = row_index
                     .map(|i| format!("Row {i} field '{field}'"))
                     .unwrap_or_else(|| format!("Field '{field}'"));
-                violations.push(Violation {
-                    rule_name: "FieldType".to_string(),
-                    detail: format!(
+                violations.push(simple_violation(
+                    "FieldType",
+                    format!(
                         "{location} expected type '{}', got '{}'.",
                         value_type_label(expected),
                         detected_value_type(value)
                     ),
-                });
+                ));
             }
         }
         None => {
             let location = row_index
                 .map(|i| format!("Row {i}"))
                 .unwrap_or_else(|| "Object".to_string());
-            violations.push(Violation {
-                rule_name: "FieldType".to_string(),
-                detail: format!("{location} is missing field '{field}' for type check."),
-            });
+            violations.push(simple_violation(
+                "FieldType",
+                format!("{location} is missing field '{field}' for type check."),
+            ));
         }
     }
 }
@@ -209,23 +247,71 @@ fn check_no_empty_rows(output: &Value, violations: &mut Vec<Violation>) {
                 match row {
                     Value::Object(map) => {
                         if map.is_empty() || map.values().all(is_empty_value) {
-                            violations.push(Violation {
-                                rule_name: "NoEmptyRows".to_string(),
-                                detail: format!("Row {idx} is empty."),
-                            });
+                            violations.push(simple_violation(
+                                "NoEmptyRows",
+                                format!("Row {idx} is empty."),
+                            ));
                         }
                     }
-                    _ => violations.push(Violation {
-                        rule_name: "NoEmptyRows".to_string(),
-                        detail: format!("Row {idx} is not an object."),
-                    }),
+                    _ => violations.push(simple_violation(
+                        "NoEmptyRows",
+                        format!("Row {idx} is not an object."),
+                    )),
                 }
             }
         }
-        _ => violations.push(Violation {
-            rule_name: "NoEmptyRows".to_string(),
-            detail: "NoEmptyRows requires top-level array output.".to_string(),
-        }),
+        _ => violations.push(simple_violation(
+            "NoEmptyRows",
+            "NoEmptyRows requires top-level array output.".to_string(),
+        )),
+    }
+}
+
+fn check_allowed_values(
+    field: &str,
+    values: &[Value],
+    output: &Value,
+    violations: &mut Vec<Violation>,
+) {
+    match output {
+        Value::Object(map) => {
+            if let Some(actual) = map.get(field) {
+                if !values.iter().any(|allowed| allowed == actual) {
+                    violations.push(allowed_values_violation(
+                        field,
+                        values,
+                        actual,
+                        format!("Field '{field}' has a disallowed value."),
+                    ));
+                }
+            }
+        }
+        Value::Array(rows) => {
+            for (idx, row) in rows.iter().enumerate() {
+                match row {
+                    Value::Object(map) => {
+                        if let Some(actual) = map.get(field) {
+                            if !values.iter().any(|allowed| allowed == actual) {
+                                violations.push(allowed_values_violation(
+                                    field,
+                                    values,
+                                    actual,
+                                    format!("Row {idx} field '{field}' has a disallowed value."),
+                                ));
+                            }
+                        }
+                    }
+                    _ => violations.push(simple_violation(
+                        "AllowedValues",
+                        format!("Row {idx} is not an object."),
+                    )),
+                }
+            }
+        }
+        _ => violations.push(simple_violation(
+            "AllowedValues",
+            "Output must be an object or an array of objects.".to_string(),
+        )),
     }
 }
 
