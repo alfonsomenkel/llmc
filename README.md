@@ -1,4 +1,4 @@
-# llm contracts
+# llmc
 
 [![CI](https://github.com/alfonsomenkel/llm-contacts/actions/workflows/ci.yml/badge.svg)](https://github.com/alfonsomenkel/llm-contacts/actions/workflows/ci.yml)
 
