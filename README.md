@@ -90,3 +90,7 @@ Contracts are versioned. Bump the contract version when contract semantics chang
 - Not a debugger
 - Not an LLM evaluator
 - It enforces invariants only
+
+## License
+
+MIT. See `LICENSE`.
