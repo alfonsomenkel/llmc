@@ -11,3 +11,5 @@
 # Vim swap files
 *.swp
 *.swo
+target/
+.DS_Store
