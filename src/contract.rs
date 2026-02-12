@@ -24,6 +24,8 @@ pub enum Rule {
     RequiredField { field: String },
     FieldType { field: String, expected: ValueType },
     AllowedValues { field: String, values: Vec<Value> },
+    Regex { field: String, pattern: String },
+    MinItems { value: u64 },
     NoEmptyRows,
 }
 

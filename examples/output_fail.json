@@ -2,11 +2,13 @@
   {
     "id": 1,
     "name": "Alice",
-    "status": "rejected"
+    "status": "rejected",
+    "code": "ab1"
   },
   {
     "id": 2,
     "name": "Bob",
-    "status": "accepted"
+    "status": "accepted",
+    "code": "XYZ"
   }
 ]

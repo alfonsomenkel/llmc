@@ -40,6 +40,10 @@ fn main() {
             failure_verdict("InvalidContract", err.to_string()),
             EXIT_INVALID_CONTRACT,
         ),
+        Err(RunError::InvalidContractRegex(err)) => (
+            failure_verdict("InvalidContract", err.to_string()),
+            EXIT_INVALID_CONTRACT,
+        ),
         Err(RunError::InvalidOutput(err)) => (
             failure_verdict("Runtime", format!("Invalid output JSON: {err}")),
             EXIT_RUNTIME_IO,
@@ -103,7 +107,7 @@ fn to_public_violation(violation: &Violation) -> Value {
     );
     obj.insert("message", Value::String(violation.detail.clone()));
     if let Some(expected) = &violation.expected {
-        obj.insert("expected", Value::Array(expected.clone()));
+        obj.insert("expected", expected.clone());
     }
     if let Some(actual) = &violation.actual {
         obj.insert("actual", actual.clone());

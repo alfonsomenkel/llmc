@@ -123,6 +123,56 @@ fn exits_one_when_allowed_values_rule_fails() {
 }
 
 #[test]
+fn exits_one_when_regex_rule_fails() {
+    let dir = tempdir().expect("create temp dir");
+    let contract_path = dir.path().join("contract.json");
+    let output_path = dir.path().join("output.json");
+
+    let contract = json!({
+        "inputs": ["prompt"],
+        "output_type": "array",
+        "rules": [
+            {"rule": "regex", "field": "code", "pattern": "^[A-Z]{3}$"}
+        ]
+    });
+    let output = json!([
+        {"code": "ab1"}
+    ]);
+
+    write_json(&contract_path, &contract);
+    write_json(&output_path, &output);
+
+    let result = run_cli(&contract_path, &output_path);
+    assert_exit_code(&result, 1);
+    assert_stdout_verdict_schema(&result);
+}
+
+#[test]
+fn exits_one_when_min_items_rule_fails() {
+    let dir = tempdir().expect("create temp dir");
+    let contract_path = dir.path().join("contract.json");
+    let output_path = dir.path().join("output.json");
+
+    let contract = json!({
+        "inputs": ["prompt"],
+        "output_type": "array",
+        "rules": [
+            {"rule": "min_items", "value": 2}
+        ]
+    });
+    let output = json!([
+        {"id": 1}
+    ]);
+
+    write_json(&contract_path, &contract);
+    write_json(&output_path, &output);
+
+    let result = run_cli(&contract_path, &output_path);
+    assert_exit_code(&result, 1);
+    assert_stdout_verdict_schema(&result);
+}
+
+#[test]
 fn exits_two_when_contract_is_invalid() {
     let dir = tempdir().expect("create temp dir");
     let contract_path = dir.path().join("contract.json");

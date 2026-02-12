@@ -2,11 +2,19 @@
   {
     "id": 1,
     "name": "Alice",
-    "status": "ok"
+    "status": "ok",
+    "code": "ABC"
   },
   {
     "id": 2,
     "name": "Bob",
-    "status": "accepted"
+    "status": "accepted",
+    "code": "XYZ"
+  },
+  {
+    "id": 3,
+    "name": "Carol",
+    "status": "ok",
+    "code": "QWE"
   }
 ]

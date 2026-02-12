@@ -1,0 +1,39 @@
+{
+  "contract": "user_list",
+  "version": 4,
+  "inputs": [
+    "prompt"
+  ],
+  "output_type": "array",
+  "rules": [
+    {
+      "rule": "required_field",
+      "field": "id"
+    },
+    {
+      "rule": "field_type",
+      "field": "id",
+      "expected": "number"
+    },
+    {
+      "rule": "allowed_values",
+      "field": "status",
+      "values": [
+        "ok",
+        "accepted"
+      ]
+    },
+    {
+      "rule": "regex",
+      "field": "code",
+      "pattern": "^[A-Z]{3}$"
+    },
+    {
+      "rule": "min_items",
+      "value": 3
+    },
+    {
+      "rule": "no_empty_rows"
+    }
+  ]
+}

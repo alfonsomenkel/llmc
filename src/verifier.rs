@@ -4,6 +4,7 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
+use regex::Regex;
 use serde::Serialize;
 use serde_json::Value;
 
@@ -25,7 +26,7 @@ pub struct Violation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rule: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub expected: Option<Vec<Value>>,
+    pub expected: Option<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub actual: Option<Value>,
 }
@@ -40,6 +41,7 @@ pub struct Verdict {
 pub enum RunError {
     Io(io::Error),
     InvalidContract(serde_json::Error),
+    InvalidContractRegex(regex::Error),
     InvalidOutput(serde_json::Error),
 }
 
@@ -48,6 +50,7 @@ impl fmt::Display for RunError {
         match self {
             RunError::Io(err) => write!(f, "I/O error: {err}"),
             RunError::InvalidContract(err) => write!(f, "Invalid contract JSON: {err}"),
+            RunError::InvalidContractRegex(err) => write!(f, "Invalid contract regex: {err}"),
             RunError::InvalidOutput(err) => write!(f, "Invalid output JSON: {err}"),
         }
     }
@@ -58,6 +61,7 @@ impl Error for RunError {
         match self {
             RunError::Io(err) => Some(err),
             RunError::InvalidContract(err) => Some(err),
+            RunError::InvalidContractRegex(err) => Some(err),
             RunError::InvalidOutput(err) => Some(err),
         }
     }
@@ -70,6 +74,7 @@ pub fn run(contract_path: &Path, output_path: &Path) -> Result<Verdict, RunError
     let contract: Contract =
         serde_json::from_str(&contract_contents).map_err(RunError::InvalidContract)?;
     let output: Value = serde_json::from_str(&output_contents).map_err(RunError::InvalidOutput)?;
+    validate_contract(&contract)?;
 
     Ok(verify(&contract, &output))
 }
@@ -124,9 +129,40 @@ fn allowed_values_violation(
         detail,
         field: Some(field.to_string()),
         rule: Some("allowed_values".to_string()),
-        expected: Some(expected.to_vec()),
+        expected: Some(Value::Array(expected.to_vec())),
         actual: Some(actual.clone()),
     }
+}
+
+fn regex_violation(field: &str, pattern: &str, actual: &Value, detail: String) -> Violation {
+    Violation {
+        rule_name: "Regex".to_string(),
+        detail,
+        field: Some(field.to_string()),
+        rule: Some("regex".to_string()),
+        expected: Some(Value::String(pattern.to_string())),
+        actual: Some(actual.clone()),
+    }
+}
+
+fn min_items_violation(value: u64, actual: Value, detail: String) -> Violation {
+    Violation {
+        rule_name: "MinItems".to_string(),
+        detail,
+        field: Some("$".to_string()),
+        rule: Some("min_items".to_string()),
+        expected: Some(Value::from(value)),
+        actual: Some(actual),
+    }
+}
+
+fn validate_contract(contract: &Contract) -> Result<(), RunError> {
+    for rule in &contract.rules {
+        if let Rule::Regex { pattern, .. } = rule {
+            Regex::new(pattern).map_err(RunError::InvalidContractRegex)?;
+        }
+    }
+    Ok(())
 }
 
 fn check_rule(rule: &Rule, output: &Value, violations: &mut Vec<Violation>) {
@@ -138,6 +174,8 @@ fn check_rule(rule: &Rule, output: &Value, violations: &mut Vec<Violation>) {
         Rule::AllowedValues { field, values } => {
             check_allowed_values(field, values, output, violations)
         }
+        Rule::Regex { field, pattern } => check_regex(field, pattern, output, violations),
+        Rule::MinItems { value } => check_min_items(*value, output, violations),
         Rule::NoEmptyRows => check_no_empty_rows(output, violations),
     }
 }
@@ -312,6 +350,84 @@ fn check_allowed_values(
             "AllowedValues",
             "Output must be an object or an array of objects.".to_string(),
         )),
+    }
+}
+
+fn check_regex(field: &str, pattern: &str, output: &Value, violations: &mut Vec<Violation>) {
+    let regex = Regex::new(pattern).expect("regex patterns validated in run()");
+    match output {
+        Value::Object(map) => check_regex_in_map(field, pattern, &regex, map, None, violations),
+        Value::Array(rows) => {
+            for (idx, row) in rows.iter().enumerate() {
+                match row {
+                    Value::Object(map) => {
+                        check_regex_in_map(field, pattern, &regex, map, Some(idx), violations)
+                    }
+                    _ => violations.push(simple_violation(
+                        "Regex",
+                        format!("Row {idx} is not an object."),
+                    )),
+                }
+            }
+        }
+        _ => violations.push(simple_violation(
+            "Regex",
+            "Output must be an object or an array of objects.".to_string(),
+        )),
+    }
+}
+
+fn check_regex_in_map(
+    field: &str,
+    pattern: &str,
+    regex: &Regex,
+    map: &serde_json::Map<String, Value>,
+    row_index: Option<usize>,
+    violations: &mut Vec<Violation>,
+) {
+    let Some(actual) = map.get(field) else {
+        return;
+    };
+
+    match actual {
+        Value::String(s) => {
+            if !regex.is_match(s) {
+                let detail = row_index
+                    .map(|idx| format!("Row {idx} field '{field}' does not match regex pattern."))
+                    .unwrap_or_else(|| format!("Field '{field}' does not match regex pattern."));
+                violations.push(regex_violation(field, pattern, actual, detail));
+            }
+        }
+        _ => {
+            let detail = row_index
+                .map(|idx| format!("Row {idx} field '{field}' must be a string for regex rule."))
+                .unwrap_or_else(|| format!("Field '{field}' must be a string for regex rule."));
+            violations.push(regex_violation(field, pattern, actual, detail));
+        }
+    }
+}
+
+fn check_min_items(value: u64, output: &Value, violations: &mut Vec<Violation>) {
+    match output {
+        Value::Array(items) => {
+            let actual_len = items.len() as u64;
+            if actual_len < value {
+                violations.push(min_items_violation(
+                    value,
+                    Value::from(actual_len),
+                    format!(
+                        "Top-level array must contain at least {value} items, found {actual_len}."
+                    ),
+                ));
+            }
+        }
+        _ => {
+            violations.push(min_items_violation(
+                value,
+                Value::String(detected_value_type(output).to_string()),
+                "MinItems requires top-level array output.".to_string(),
+            ));
+        }
     }
 }
 
