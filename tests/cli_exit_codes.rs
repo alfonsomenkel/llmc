@@ -11,13 +11,13 @@ fn write_json(path: &Path, value: &Value) {
 }
 
 fn run_cli(contract_path: &Path, output_path: &Path) -> Output {
-    Command::new(env!("CARGO_BIN_EXE_llm_contracts"))
+    Command::new(env!("CARGO_BIN_EXE_llmc"))
         .arg("--contract")
         .arg(contract_path)
         .arg("--output")
         .arg(output_path)
         .output()
-        .expect("run llm_contracts binary")
+        .expect("run llmc binary")
 }
 
 fn assert_exit_code(output: &Output, expected: i32) {

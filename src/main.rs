@@ -15,7 +15,7 @@ const EXIT_INVALID_CONTRACT: i32 = 2;
 const EXIT_RUNTIME_IO: i32 = 3;
 
 #[derive(Debug, Parser)]
-#[command(name = "llm_contracts")]
+#[command(name = "llmc")]
 #[command(about = "Verify LLM outputs against a JSON contract")]
 struct Cli {
     #[arg(short, long)]

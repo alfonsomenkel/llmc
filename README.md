@@ -1,10 +1,10 @@
-# llm_contracts
+# llm contracts
 
-`llm_contracts` validates tool/debugger/LLM-generated facts (JSON) against developer-defined contracts and returns a deterministic, external PASS/FAIL verdict.
+`llm contracts` validates tool/debugger/LLM-generated facts (JSON) against developer-defined contracts and returns a deterministic, external PASS/FAIL verdict.
 
 ## Core flow
 
-LLM -> tool/debugger -> facts (JSON) -> llm_contracts -> PASS / FAIL
+LLM -> tool/debugger -> facts (JSON) -> llmc -> PASS / FAIL
 
 ## Usage
 
@@ -40,7 +40,37 @@ Example facts/output (`output.json`):
 Run:
 
 ```bash
-llm_contracts --contract ./contract.json --output ./output.json
+llmc --contract ./contract.json --output ./output.json
+```
+
+## Build
+
+Build debug binary:
+
+```bash
+cargo build
+```
+
+Build release binary:
+
+```bash
+cargo build --release
+```
+
+Run tests:
+
+```bash
+cargo test
+```
+
+Optional shortcuts with `make`:
+
+```bash
+make build
+make release
+make test
+make run-pass
+make run-fail
 ```
 
 PASS verdict:
