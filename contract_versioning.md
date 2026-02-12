@@ -1,6 +1,6 @@
 # Contract Versioning
 
-This project versions contract schemas by file name in `/Volumes/Ext/dev/LLM Contracts/examples`.
+This project versions contract schemas by file name in `./examples`.
 
 Outputs are shared and not versioned:
 - `output_pass.json`
@@ -57,50 +57,46 @@ Outputs are shared and not versioned:
 
 From project root:
 
-```bash
-cd "/Volumes/Ext/dev/LLM Contracts"
-```
-
 Run v1 contract (pass sample):
 
 ```bash
-cargo run -- --contract "/Volumes/Ext/dev/LLM Contracts/examples/contract.v1.json" --output "/Volumes/Ext/dev/LLM Contracts/examples/output_pass.json"
+cargo run -- --contract ./examples/contract.v1.json --output ./examples/output_pass.json
 ```
 
 Run v2 contract (pass sample):
 
 ```bash
-cargo run -- --contract "/Volumes/Ext/dev/LLM Contracts/examples/contract.v2.json" --output "/Volumes/Ext/dev/LLM Contracts/examples/output_pass.json"
+cargo run -- --contract ./examples/contract.v2.json --output ./examples/output_pass.json
 ```
 
 Run v2 contract (fail sample):
 
 ```bash
-cargo run -- --contract "/Volumes/Ext/dev/LLM Contracts/examples/contract.v2.json" --output "/Volumes/Ext/dev/LLM Contracts/examples/output_fail.json"
+cargo run -- --contract ./examples/contract.v2.json --output ./examples/output_fail.json
 ```
 
 Run v3 contract (pass sample):
 
 ```bash
-cargo run -- --contract "/Volumes/Ext/dev/LLM Contracts/examples/contract.v3.json" --output "/Volumes/Ext/dev/LLM Contracts/examples/output_pass.json"
+cargo run -- --contract ./examples/contract.v3.json --output ./examples/output_pass.json
 ```
 
 Run v3 contract (fail sample):
 
 ```bash
-cargo run -- --contract "/Volumes/Ext/dev/LLM Contracts/examples/contract.v3.json" --output "/Volumes/Ext/dev/LLM Contracts/examples/output_fail.json"
+cargo run -- --contract ./examples/contract.v3.json --output ./examples/output_fail.json
 ```
 
 Run v4 contract (pass sample):
 
 ```bash
-cargo run -- --contract "/Volumes/Ext/dev/LLM Contracts/examples/contract.v4.json" --output "/Volumes/Ext/dev/LLM Contracts/examples/output_pass.json"
+cargo run -- --contract ./examples/contract.v4.json --output ./examples/output_pass.json
 ```
 
 Run v4 contract (fail sample):
 
 ```bash
-cargo run -- --contract "/Volumes/Ext/dev/LLM Contracts/examples/contract.v4.json" --output "/Volumes/Ext/dev/LLM Contracts/examples/output_fail.json"
+cargo run -- --contract ./examples/contract.v4.json --output ./examples/output_fail.json
 ```
 
 ## Exit Codes

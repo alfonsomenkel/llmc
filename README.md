@@ -1,8 +1,8 @@
 # llmc
 
-[![CI](https://github.com/alfonsomenkel/llm-contacts/actions/workflows/ci.yml/badge.svg)](https://github.com/alfonsomenkel/llm-contacts/actions/workflows/ci.yml)
+[![CI](https://github.com/alfonsomenkel/llmc/actions/workflows/ci.yml/badge.svg)](https://github.com/alfonsomenkel/llmc/actions/workflows/ci.yml)
 
-`llm contracts` validates tool/debugger/LLM-generated facts (JSON) against developer-defined contracts and returns a deterministic, external PASS/FAIL verdict.
+`llmc` validates tool/debugger/LLM-generated facts (JSON) against developer-defined contracts and returns a deterministic, external PASS/FAIL verdict.
 
 ## Core flow
 

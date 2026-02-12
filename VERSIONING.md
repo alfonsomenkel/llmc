@@ -1,6 +1,6 @@
 # Contract Versioning Policy
 
-This document defines how **contracts** are versioned in `llm_contracts`.
+This document defines how **contracts** are versioned in `llmc`.
 
 Contracts define semantic truth.  
 Correct versioning is mandatory for deterministic behavior.

@@ -14,6 +14,15 @@ This project follows contract-semantic versioning:
 
 ---
 
+## [0.1.1] - 2026-02-12
+
+### Changed
+- Renamed project/package references from `llm-contracts` / `llm_contracts` to `llmc`.
+- Bumped project version to `0.1.1` for release tag `v0.1.1`.
+- Updated repository links and usage docs to match the `llmc` name.
+
+---
+
 ## [0.1.0] - 2026-02-12
 
 ### Added
